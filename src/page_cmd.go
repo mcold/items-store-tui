@@ -13,6 +13,7 @@ type pageCmdType struct {
 	btnSave   *tview.Button
 	mIdDescr  map[int]string
 	mPosId    map[int]int
+	//pages     *tview.Pages
 }
 
 var pageCmd pageCmdType
@@ -35,7 +36,7 @@ func (pageCmd *pageCmdType) build() {
 	pageCmd.filterFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEnter {
 			filterIndex, _ := pageCmd.filterFrm.GetFocusedItemIndex()
-			query := "SELECT id, command, descr FROM cmd WHERE lower(command) like lower('%" + pageCmd.filterFrm.GetFormItem(filterIndex).(*tview.InputField).GetText() + "%')"
+			query := "SELECT id, command, descr FROM cmd WHERE lower(command) like lower('%" + pageCmd.filterFrm.GetFormItem(filterIndex).(*tview.InputField).GetText() + "%') order by command"
 
 			cmdFind, err := database.Query(query)
 			check(err)
@@ -72,7 +73,7 @@ func (pageCmd *pageCmdType) build() {
 	if err != nil {
 		return
 	} else {
-		query := "SELECT id, command, descr FROM cmd"
+		query := "SELECT id, command, descr FROM cmd order by command"
 		cmds, err := database.Query(query)
 		check(err)
 
@@ -102,6 +103,10 @@ func (pageCmd *pageCmdType) build() {
 		check(err)
 	})
 
+	//flexDescrKeys := tview.NewFlex().
+	//	AddItem(pageCmd.descrs, 0, 10, false).
+	//	AddItem(pageCmd.cmds, 0, 10, false)
+
 	flexDescr := tview.NewFlex().
 		AddItem(pageCmd.descrs, 0, 10, false).
 		AddItem(frmSave, 0, 2, false)
@@ -128,11 +133,22 @@ func (pageCmd *pageCmdType) build() {
 			app.SetFocus(pageCmd.filterFrm)
 			return nil
 		}
+		if event.Key() == tcell.KeyInsert && event.Modifiers() == tcell.ModCtrl {
+			application.pages.SwitchToPage("new command")
+			return nil
+		}
 		//if event.Rune() == 's' && event.Modifiers() == tcell.ModCtrl {
 		//	frmSave.GetFormItemByLabel("Save").PasteHandler()
 		//	app.SetFocus(pageCmd.cmds)
 		//	return nil
 		//}
+		if event.Rune() == 'h' && event.Modifiers() == tcell.ModAlt {
+			application.pages.ShowPage("help")
+			return nil
+		}
+		if event.Key() == tcell.KeyEsc {
+			application.ConfirmQuit()
+		}
 		return event
 	})
 
@@ -157,6 +173,12 @@ func (pageCmd *pageCmdType) build() {
 	})
 
 	pageCmd.filterFrm.SetFocus(1)
+
+	//pageCmd.pages = tview.NewPages()
+	//pageMainMessage.build()
+	//pageMainMessage.show(tview.AlignCenter, "", "helpText")
+
+	//pageCmd.pages.ShowPage("helpText")
 
 	application.pages.AddPage("commands", flexCmplx, true, true)
 }
