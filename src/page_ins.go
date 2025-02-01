@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"strings"
 )
 
 type pageInsType struct {
@@ -34,11 +35,14 @@ func (pageIns *pageInsType) build() {
 	flexIns.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 's' && event.Modifiers() == tcell.ModAlt {
 			saveCmd()
+			pageIns.cmd.SetText("", true)
+			pageIns.descr.SetText("", true)
 			refreshCmdList()
 			application.pages.SwitchToPage("commands")
 			return nil
 		}
 		if event.Key() == tcell.KeyEsc {
+			saveCmd()
 			pageIns.cmd.SetText("", true)
 			pageIns.descr.SetText("", true)
 			refreshCmdList()
@@ -53,11 +57,14 @@ func (pageIns *pageInsType) build() {
 }
 
 func saveCmd() {
-	// TODO: upsert
-	query := "INSERT INTO cmd(command, descr)" + "\n" +
-		"VALUES( '" + pageIns.cmd.GetText() + "'," +
-		"'" + pageIns.descr.GetText() + "')"
+	if len(strings.Trim(pageIns.cmd.GetText(), "")) > 0 {
+		query := "INSERT INTO cmd(command, descr)" + "\n" +
+			"VALUES( '" + pageIns.cmd.GetText() + "'," +
+			"'" + pageIns.descr.GetText() + "')" + "\n" +
+			"ON CONFLICT(command)" + "\n" +
+			"DO UPDATE SET descr='" + pageIns.descr.GetText() + "'"
 
-	_, err := database.Exec(query)
-	check(err)
+		_, err := database.Exec(query)
+		check(err)
+	}
 }
