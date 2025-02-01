@@ -20,11 +20,10 @@ func (pageIns *pageInsType) build() {
 
 	pageIns.descr = tview.NewTextArea()
 	pageIns.descr.SetBorder(true)
-	pageIns.descr.SetTitle("DESCR")
+	pageIns.descr.SetTitle("DESCRIPTION")
 
 	frmSave := tview.NewForm().AddButton("Save", func() {
 		saveCmd()
-		application.pages.ShowPage("commands")
 	})
 
 	pageIns.cmd.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -56,28 +55,23 @@ func (pageIns *pageInsType) build() {
 			app.SetFocus(pageIns.descr)
 			return nil
 		}
+		if event.Key() == tcell.KeyEnter {
+			saveCmd()
+		}
 		return event
 	})
 
 	flexIns := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pageIns.cmd, 0, 1, true).
-		AddItem(pageIns.descr, 0, 10, true).
-		AddItem(frmSave, 0, 2, false)
+		AddItem(pageIns.descr, 0, 12, true).
+		AddItem(frmSave, 0, 1, false)
 
 	flexIns.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 's' && event.Modifiers() == tcell.ModAlt {
 			saveCmd()
-			pageIns.cmd.SetText("", true)
-			pageIns.descr.SetText("", true)
-			refreshCmdList()
-			application.pages.SwitchToPage("commands")
 			return nil
 		}
 		if event.Key() == tcell.KeyEsc {
-			saveCmd()
-			pageIns.cmd.SetText("", true)
-			pageIns.descr.SetText("", true)
-			refreshCmdList()
 			application.pages.SwitchToPage("commands")
 			return nil
 		}
@@ -89,6 +83,15 @@ func (pageIns *pageInsType) build() {
 }
 
 func saveCmd() {
+	saveCmdDB()
+	pageIns.cmd.SetText("", true)
+	pageIns.descr.SetText("", true)
+	refreshCmdList()
+	application.pages.SwitchToPage("commands")
+	app.SetFocus(pageCmd.cmds)
+}
+
+func saveCmdDB() {
 	if len(strings.Trim(pageIns.cmd.GetText(), "")) > 0 {
 		query := "INSERT INTO cmd(command, descr)" + "\n" +
 			"VALUES( '" + pageIns.cmd.GetText() + "'," +

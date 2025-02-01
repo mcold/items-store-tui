@@ -17,10 +17,15 @@ func (application *applicationType) init() {
 
 	application.pages = tview.NewPages()
 	pageCmd.build()
+
+	_, _, w, _ := pageCmd.filterFrm.GetInnerRect()
+	pageCmd.filterFrm.GetFormItem(0).(*tview.InputField).SetFieldWidth(w * 2)
+
 	pageIns.build()
 	pageMainMessage.build()
 	pageConfirm.build()
 	application.registerGlobalShortcuts()
+	app.SetFocus(pageCmd.filterFrm)
 
 	if err := app.SetRoot(application.pages, true).EnableMouse(true).EnablePaste(true).Run(); err != nil {
 		panic(err)
