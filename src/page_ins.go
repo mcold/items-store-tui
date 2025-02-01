@@ -34,15 +34,15 @@ func (pageIns *pageInsType) build() {
 	flexIns.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 's' && event.Modifiers() == tcell.ModAlt {
 			saveCmd()
+			refreshCmdList()
 			application.pages.SwitchToPage("commands")
-			// TODO: renew command list
 			return nil
 		}
 		if event.Key() == tcell.KeyEsc {
 			pageIns.cmd.SetText("", true)
 			pageIns.descr.SetText("", true)
+			refreshCmdList()
 			application.pages.SwitchToPage("commands")
-			// TODO: renew command list
 			return nil
 		}
 

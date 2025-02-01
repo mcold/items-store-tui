@@ -35,28 +35,29 @@ func (pageCmd *pageCmdType) build() {
 
 	pageCmd.filterFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEnter {
-			filterIndex, _ := pageCmd.filterFrm.GetFocusedItemIndex()
-			query := "SELECT id, command, descr FROM cmd WHERE lower(command) like lower('%" + pageCmd.filterFrm.GetFormItem(filterIndex).(*tview.InputField).GetText() + "%') order by command"
-
-			cmdFind, err := database.Query(query)
-			check(err)
-
-			pageCmd.mIdDescr = make(map[int]string)
-			pageCmd.mPosId = make(map[int]int)
-			pageCmd.cmds.Clear()
-			rowCount := 1
-			for cmdFind.Next() {
-				id := 0
-				cmd := ""
-				descr := ""
-				cmdFind.Scan(&id, &cmd, &descr)
-
-				pageCmd.cmds.AddItem(cmd, "", rune(0), func() {})
-
-				pageCmd.mIdDescr[id] = descr
-				pageCmd.mPosId[rowCount-1] = id
-				rowCount++
-			}
+			refreshCmdList()
+			//filterIndex, _ := pageCmd.filterFrm.GetFocusedItemIndex()
+			//query := "SELECT id, command, descr FROM cmd WHERE lower(command) like lower('%" + pageCmd.filterFrm.GetFormItem(filterIndex).(*tview.InputField).GetText() + "%') order by command"
+			//
+			//cmdFind, err := database.Query(query)
+			//check(err)
+			//
+			//pageCmd.mIdDescr = make(map[int]string)
+			//pageCmd.mPosId = make(map[int]int)
+			//pageCmd.cmds.Clear()
+			//rowCount := 1
+			//for cmdFind.Next() {
+			//	id := 0
+			//	cmd := ""
+			//	descr := ""
+			//	cmdFind.Scan(&id, &cmd, &descr)
+			//
+			//	pageCmd.cmds.AddItem(cmd, "", rune(0), func() {})
+			//
+			//	pageCmd.mIdDescr[id] = descr
+			//	pageCmd.mPosId[rowCount-1] = id
+			//	rowCount++
+			//}
 			return nil
 		}
 
@@ -181,4 +182,27 @@ func (pageCmd *pageCmdType) build() {
 	//pageCmd.pages.ShowPage("helpText")
 
 	application.pages.AddPage("commands", flexCmplx, true, true)
+}
+
+func refreshCmdList() {
+	query := "SELECT id, command, descr FROM cmd WHERE lower(command) like lower('%" + pageCmd.filterFrm.GetFormItem(0).(*tview.InputField).GetText() + "%') order by command"
+	cmdFind, err := database.Query(query)
+	check(err)
+
+	pageCmd.mIdDescr = make(map[int]string)
+	pageCmd.mPosId = make(map[int]int)
+	pageCmd.cmds.Clear()
+	rowCount := 1
+	for cmdFind.Next() {
+		id := 0
+		cmd := ""
+		descr := ""
+		cmdFind.Scan(&id, &cmd, &descr)
+
+		pageCmd.cmds.AddItem(cmd, "", rune(0), func() {})
+
+		pageCmd.mIdDescr[id] = descr
+		pageCmd.mPosId[rowCount-1] = id
+		rowCount++
+	}
 }
