@@ -27,6 +27,38 @@ func (pageIns *pageInsType) build() {
 		application.pages.ShowPage("commands")
 	})
 
+	pageIns.cmd.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageIns.descr)
+			return nil
+		}
+		return event
+	})
+
+	pageIns.descr.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(frmSave)
+			return nil
+		}
+		if event.Key() == tcell.KeyBacktab {
+			app.SetFocus(pageIns.cmd)
+			return nil
+		}
+		return event
+	})
+
+	frmSave.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageIns.cmd)
+			return nil
+		}
+		if event.Key() == tcell.KeyBacktab {
+			app.SetFocus(pageIns.descr)
+			return nil
+		}
+		return event
+	})
+
 	flexIns := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pageIns.cmd, 0, 1, true).
 		AddItem(pageIns.descr, 0, 10, true).
