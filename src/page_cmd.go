@@ -1,9 +1,10 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strconv"
 )
 
 type pageCmdType struct {
@@ -21,10 +22,12 @@ func (pageCmd *pageCmdType) build() {
 	pageCmd.cmds = tview.NewList()
 	pageCmd.cmds.Box.SetBorder(true)
 	pageCmd.cmds.Box.SetTitle("command (alt+q)")
+	pageCmd.cmds.SetBorderPadding(1, 0, 1, 0)
 
 	pageCmd.descrs = tview.NewTextArea()
 	pageCmd.descrs.Box.SetBorder(true)
 	pageCmd.descrs.Box.SetTitle("description (alt+w)")
+	pageCmd.descrs.SetBorderPadding(1, 0, 1, 0)
 
 	pageCmd.filterFrm = tview.NewForm().
 		AddInputField("COMMAND", "", 20, nil, nil)

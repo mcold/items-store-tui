@@ -1,9 +1,10 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strings"
 )
 
 type pageInsType struct {
@@ -17,10 +18,12 @@ func (pageIns *pageInsType) build() {
 	pageIns.cmd = tview.NewTextArea()
 	pageIns.cmd.SetBorder(true)
 	pageIns.cmd.SetTitle("COMMAND")
+	pageIns.cmd.SetBorderPadding(1, 1, 1, 0)
 
 	pageIns.descr = tview.NewTextArea()
 	pageIns.descr.SetBorder(true)
 	pageIns.descr.SetTitle("DESCRIPTION")
+	pageIns.descr.SetBorderPadding(1, 0, 1, 0)
 
 	frmSave := tview.NewForm().AddButton("Save", func() {
 		saveCmd()
@@ -63,7 +66,7 @@ func (pageIns *pageInsType) build() {
 
 	flexIns := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pageIns.cmd, 0, 1, true).
-		AddItem(pageIns.descr, 0, 12, true).
+		AddItem(pageIns.descr, 0, 8, true).
 		AddItem(frmSave, 0, 1, false)
 
 	flexIns.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

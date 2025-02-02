@@ -5,3 +5,4 @@ src/*.exe*
 *.exe*
 *.txt
 src/*.db*
+todo
