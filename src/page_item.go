@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -37,10 +38,27 @@ func (pageItem *pageItemType) build() {
 	pageItem.descrs.SetBorderPadding(1, 0, 1, 0)
 
 	pageItem.filterFrm = tview.NewForm().
-		AddInputField("ITEM", "", 20, nil, nil)
+		AddInputField("ITEM", "", 20, nil, nil).
+		AddInputField("DESCR", "", 22, nil, nil)
 
 	pageItem.filterFrm.Box.SetBorder(true)
 	pageItem.filterFrm.Box.SetTitle("find (alt+f)")
+
+	pageItem.filterFrm.GetFormItem(0).(*tview.InputField).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageItem.filterFrm.GetFormItem(1).(*tview.InputField))
+			return nil
+		}
+		return event
+	})
+
+	pageItem.filterFrm.GetFormItem(1).(*tview.InputField).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageItem.filterFrm.GetFormItem(0).(*tview.InputField))
+			return nil
+		}
+		return event
+	})
 
 	flexItem := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pageItem.filterFrm, 0, 2, true).
@@ -230,7 +248,31 @@ func (pageItem *pageItemType) build() {
 }
 
 func refreshItemList() {
-	query := "SELECT id, name, trans, descr FROM item WHERE lower(name) like lower('%" + pageItem.filterFrm.GetFormItem(0).(*tview.InputField).GetText() + "%') order by name"
+	itemToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(0).(*tview.InputField).GetText())
+	descrToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(1).(*tview.InputField).GetText())
+	var query string
+	if len(itemToken) > 0 {
+		if len(descrToken) > 0 {
+			query = "SELECT id, name, trans, descr" +
+				" FROM item" +
+				" WHERE lower(name) like lower('%" + itemToken + "%')" +
+				" and lower(descr) like lower('%" + descrToken + "%')" +
+				" order by name"
+		} else {
+			query = "SELECT id, name, trans, descr" +
+				" FROM item" +
+				" WHERE lower(name) like lower('%" + itemToken + "%')" +
+				" order by name"
+		}
+	} else {
+		if len(descrToken) > 0 {
+			query = "SELECT id, name, trans, descr" +
+				" FROM item" +
+				" WHERE lower(descr) like lower('%" + descrToken + "%')" +
+				" order by name"
+		}
+	}
+
 	itemFind, err := database.Query(query)
 	check(err)
 
