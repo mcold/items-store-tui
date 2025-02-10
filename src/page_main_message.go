@@ -30,20 +30,20 @@ func (pageMainMessage *pageMainMessageType) build() {
 [yellow]ctrl + z[-:-:-:-]: Undo text. // TODO
 
 [green]Main UI:[-:-:-:-]
-[yellow]alt + f[-:-:-:-]: Focus on the filter command.
-[yellow]alt + q[-:-:-:-]: Focus on the command list.
+[yellow]alt + f[-:-:-:-]: Focus on the filter item.
+[yellow]alt + q[-:-:-:-]: Focus on the item list.
 [yellow]alt + w[-:-:-:-]: Focus on the description area.
 [yellow]ctrl + s[-:-:-:-]: Save.
 
 ABOUT
 
-CMD-STORE is a free and open-source project maintained by contributors. Feel free report issues or submit feature requests on GitHub
+ITEM-STORE is a free and open-source project maintained by contributors. Feel free report issues or submit feature requests on GitHub
 `
 	pageMainMessage.textViewMessage.SetText(pageMainMessage.helpText)
 
 	pageMainMessage.textViewMessage.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
-			application.pages.SwitchToPage("commands")
+			application.pages.SwitchToPage("items")
 			return nil
 		}
 
@@ -60,7 +60,7 @@ func (pageMainMessage *pageMainMessageType) show(textAlign int, title, message s
 	switch message {
 	case "helpText":
 		pageMainMessage.textViewMessage.SetTextAlign(tview.AlignLeft)
-		pageMainMessage.textViewMessage.SetTitle("CMD Help (alt+h)")
+		pageMainMessage.textViewMessage.SetTitle("Help (alt+h)")
 		pageMainMessage.textViewMessage.SetText(pageMainMessage.helpText)
 	default:
 		pageMainMessage.textViewMessage.SetTextAlign(textAlign)

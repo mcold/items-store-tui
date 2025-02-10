@@ -1,4 +1,4 @@
-module github.com/mcold/cmd-store
+module github.com/mcold/item-store
 
 go 1.23
 

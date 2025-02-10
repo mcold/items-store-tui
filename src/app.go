@@ -16,16 +16,16 @@ func (application *applicationType) init() {
 	app = tview.NewApplication()
 
 	application.pages = tview.NewPages()
-	pageCmd.build()
+	pageItem.build()
 
-	_, _, w, _ := pageCmd.filterFrm.GetInnerRect()
-	pageCmd.filterFrm.GetFormItem(0).(*tview.InputField).SetFieldWidth(w * 2)
+	_, _, w, _ := pageItem.filterFrm.GetInnerRect()
+	pageItem.filterFrm.GetFormItem(0).(*tview.InputField).SetFieldWidth(w * 2)
 
 	pageIns.build()
 	pageMainMessage.build()
 	pageConfirm.build()
 	application.registerGlobalShortcuts()
-	app.SetFocus(pageCmd.filterFrm)
+	app.SetFocus(pageItem.filterFrm)
 
 	if err := app.SetRoot(application.pages, true).EnableMouse(true).EnablePaste(true).Run(); err != nil {
 		panic(err)
