@@ -10,14 +10,16 @@ import (
 )
 
 type pageItemType struct {
-	items     *tview.List
-	trans     *tview.TextArea
-	descrs    *tview.TextArea
-	filterFrm *tview.Form
-	saveFrm   *tview.Form
-	mIdDescr  map[int]string
-	mIdTrans  map[int]string
-	mPosId    map[int]int
+	items      *tview.List
+	trans      *tview.TextArea
+	descrs     *tview.TextArea
+	filterFrm  *tview.Form
+	itemArea   *tview.TextArea
+	saveFrm    *tview.Form
+	mIdDescr   map[int]string
+	mIdTrans   map[int]string
+	mPosId     map[int]int
+	curItemPos int
 }
 
 var pageItem pageItemType
@@ -30,7 +32,7 @@ func (pageItem *pageItemType) build() {
 
 	pageItem.trans = tview.NewTextArea()
 	pageItem.trans.Box.SetBorder(true)
-	pageItem.trans.Box.SetTitle("transcription (alt+t)")
+	pageItem.trans.Box.SetTitle("short (alt+t)")
 	pageItem.trans.SetBorderPadding(1, 1, 1, 0)
 
 	pageItem.descrs = tview.NewTextArea()
@@ -61,9 +63,17 @@ func (pageItem *pageItemType) build() {
 		return event
 	})
 
+	pageItem.itemArea = tview.NewTextArea()
+	pageItem.itemArea.SetBorder(true)
+	pageItem.itemArea.SetTitle("item (alt+e)")
+
+	pageItem.itemArea.SetBackgroundColor(tcell.ColorDarkBlue)
+	pageItem.itemArea.SetBorderPadding(1, 1, 1, 1)
+
 	flexItem := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(pageItem.filterFrm, 0, 2, true).
-		AddItem(pageItem.items, 0, 10, false)
+		AddItem(pageItem.filterFrm, 8, 0, true).
+		AddItem(pageItem.items, 0, 10, false).
+		AddItem(pageItem.itemArea, 6, 0, false)
 
 	pageItem.mIdDescr = make(map[int]string)
 	pageItem.mIdTrans = make(map[int]string)
@@ -125,6 +135,8 @@ func (pageItem *pageItemType) build() {
 	})
 
 	pageItem.items.SetFocusFunc(func() {
+		itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
+		pageItem.itemArea.SetText(itemText, true)
 		pageItem.trans.SetText(pageItem.mIdTrans[pageItem.mPosId[pageItem.items.GetCurrentItem()]], false)
 		pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]], false)
 	})
@@ -143,6 +155,11 @@ func (pageItem *pageItemType) build() {
 		}
 		if event.Rune() == 'w' && event.Modifiers() == tcell.ModAlt {
 			app.SetFocus(pageItem.descrs)
+
+			return nil
+		}
+		if event.Rune() == 'e' && event.Modifiers() == tcell.ModAlt {
+			app.SetFocus(pageItem.itemArea)
 
 			return nil
 		}
@@ -189,21 +206,7 @@ func (pageItem *pageItemType) build() {
 		if event.Key() == tcell.KeyDelete {
 			delete()
 			refreshItemList()
-			//curPos := pageItem.mPosId[pageItem.items.GetCurrentItem()]
-			//newIndex := curPos - 1
-			//if newIndex >= 0 {
-			//	for pos, id := range pageItem.mPosId {
-			//		if pos > curPos {
-			//
-			//		}
-			//	}
-			//
-			//	pageItem.items.SetCurrentItem(0)
-			//}
-			//delete()
-			//if pageItem.items.GetItemCount() > 0 {
-			//
-			//}
+
 			return nil
 		}
 		return event
@@ -227,6 +230,8 @@ func (pageItem *pageItemType) build() {
 			cnt := pageItem.items.GetItemCount()
 			if curId < cnt {
 				pageItem.items.SetCurrentItem(curId)
+				itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
+				pageItem.itemArea.SetText(itemText, true)
 				pageItem.trans.SetText(pageItem.mIdTrans[pageItem.mPosId[pageItem.items.GetCurrentItem()]], true)
 				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
@@ -247,6 +252,8 @@ func (pageItem *pageItemType) build() {
 			curId := pageItem.items.GetCurrentItem() - 1
 			if curId > -1 {
 				pageItem.items.SetCurrentItem(curId)
+				itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
+				pageItem.itemArea.SetText(itemText, true)
 				pageItem.trans.SetText(pageItem.mIdTrans[pageItem.mPosId[pageItem.items.GetCurrentItem()]], true)
 				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
@@ -272,6 +279,8 @@ func refreshItemList() {
 	log.Println("-------------------------------")
 	log.Println("refreshItemList")
 	log.Println("--------------------")
+
+	pageItem.curItemPos = pageItem.items.GetCurrentItem()
 
 	itemToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(0).(*tview.InputField).GetText())
 	descrToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(1).(*tview.InputField).GetText())
@@ -314,7 +323,6 @@ func refreshItemList() {
 	pageItem.mIdDescr = make(map[int]string)
 	pageItem.mPosId = make(map[int]int)
 	pageItem.items.Clear()
-	pageItem.descrs.SetText("", false)
 	rowCount := 1
 	for itemFind.Next() {
 		id := 0
@@ -331,19 +339,31 @@ func refreshItemList() {
 		rowCount++
 	}
 
+	pageItem.items.SetCurrentItem(pageItem.curItemPos)
+
 	log.Println("-------------------------------")
 }
 
 func save() {
+	log.Println("-------------------------------")
+	log.Println("save")
+	log.Println("--------------------")
+
 	query := "UPDATE item" + "\n" +
-		"SET descr = '" + pageItem.descrs.GetText() + "'\n" +
+		"SET name = '" + pageItem.itemArea.GetText() + "',\n" +
+		"descr = '" + pageItem.descrs.GetText() + "',\n" +
 		"trans = '" + pageItem.trans.GetText() + "'\n" +
 		"WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
+
+	log.Println(query)
 
 	pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]] = pageItem.descrs.GetText()
 
 	_, err := database.Exec(query)
 	check(err)
+
+	refreshItemList()
+	log.Println("-------------------------------")
 }
 
 func delete() {
