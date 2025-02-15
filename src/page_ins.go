@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -110,6 +111,16 @@ func saveItem() {
 }
 
 func saveItemDB() {
+	log.Println("-------------------------------")
+	log.Println("saveItemDB")
+	log.Println("--------------------")
+
+	log.Println("itemName: " + pageIns.item.GetText())
+	log.Println("trans: " + pageIns.trans.GetText())
+	log.Println("itemDesc: " + pageIns.item.GetText())
+
+	log.Println(len(strings.Trim(pageIns.item.GetText(), "")))
+
 	if len(strings.Trim(pageIns.item.GetText(), "")) > 0 {
 		query := "INSERT INTO item(name, trans, descr)" + "\n" +
 			"VALUES( '" + pageIns.item.GetText() + "'," +
@@ -118,7 +129,19 @@ func saveItemDB() {
 			"ON CONFLICT(name)" + "\n" +
 			"DO UPDATE SET descr='" + pageIns.descr.GetText() + "'"
 
+		log.Println(query)
+
 		_, err := database.Exec(query)
 		check(err)
 	}
+
+	clearInsFields()
+
+	log.Println("-------------------------------")
+}
+
+func clearInsFields() {
+	pageIns.item.SetText("", true)
+	pageIns.trans.SetText("", true)
+	pageIns.descr.SetText("", true)
 }

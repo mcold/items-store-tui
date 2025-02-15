@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strconv"
 	"strings"
 
@@ -185,6 +186,26 @@ func (pageItem *pageItemType) build() {
 			app.SetFocus(pageItem.descrs)
 			return nil
 		}
+		if event.Key() == tcell.KeyDelete {
+			delete()
+			refreshItemList()
+			//curPos := pageItem.mPosId[pageItem.items.GetCurrentItem()]
+			//newIndex := curPos - 1
+			//if newIndex >= 0 {
+			//	for pos, id := range pageItem.mPosId {
+			//		if pos > curPos {
+			//
+			//		}
+			//	}
+			//
+			//	pageItem.items.SetCurrentItem(0)
+			//}
+			//delete()
+			//if pageItem.items.GetItemCount() > 0 {
+			//
+			//}
+			return nil
+		}
 		return event
 	})
 
@@ -248,9 +269,17 @@ func (pageItem *pageItemType) build() {
 }
 
 func refreshItemList() {
+	log.Println("-------------------------------")
+	log.Println("refreshItemList")
+	log.Println("--------------------")
+
 	itemToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(0).(*tview.InputField).GetText())
 	descrToken := strings.TrimSpace(pageItem.filterFrm.GetFormItem(1).(*tview.InputField).GetText())
 	var query string
+
+	log.Println("len itemToken: ", len(itemToken))
+	log.Println("len descrToken: ", len(descrToken))
+
 	if len(itemToken) > 0 {
 		if len(descrToken) > 0 {
 			query = "SELECT id, name, trans, descr" +
@@ -270,8 +299,14 @@ func refreshItemList() {
 				" FROM item" +
 				" WHERE lower(descr) like lower('%" + descrToken + "%')" +
 				" order by name"
+		} else {
+			query = "SELECT id, name, trans, descr" +
+				" FROM item" +
+				" order by name"
 		}
 	}
+
+	log.Println(query)
 
 	itemFind, err := database.Query(query)
 	check(err)
@@ -295,6 +330,8 @@ func refreshItemList() {
 		pageItem.mPosId[rowCount-1] = id
 		rowCount++
 	}
+
+	log.Println("-------------------------------")
 }
 
 func save() {
@@ -304,6 +341,13 @@ func save() {
 		"WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
 
 	pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]] = pageItem.descrs.GetText()
+
+	_, err := database.Exec(query)
+	check(err)
+}
+
+func delete() {
+	query := "DELETE FROM item " + "WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
 
 	_, err := database.Exec(query)
 	check(err)
