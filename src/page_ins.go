@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/atotto/clipboard"
 	"log"
 	"strings"
 
@@ -59,6 +60,13 @@ func (pageIns *pageInsType) build() {
 		}
 		if event.Key() == tcell.KeyBacktab {
 			app.SetFocus(pageIns.item)
+			return nil
+		}
+		if event.Rune() == 'v' && event.Modifiers() == tcell.ModAlt {
+
+			clipBoardContent, err := clipboard.ReadAll()
+			check(err)
+			pageIns.descr.SetText(pageIns.descr.GetText()+"\n"+clipBoardContent, true)
 			return nil
 		}
 		return event

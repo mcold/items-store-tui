@@ -35,6 +35,8 @@ func (pageMainMessage *pageMainMessageType) build() {
 [yellow]alt + w[-:-:-:-]: Focus on the description area.
 [yellow]ctrl + s[-:-:-:-]: Save.
 
+[yellow]alt + v[-:-:-:-]: Paste clipboard buffer content (only description field).
+
 ABOUT
 
 ITEM-STORE is a free and open-source project maintained by contributors. Feel free report issues or submit feature requests on GitHub

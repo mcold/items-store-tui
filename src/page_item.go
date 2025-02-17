@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -94,7 +95,7 @@ func (pageItem *pageItemType) build() {
 			err := items.Scan(&id, &item, &trans, &descr)
 			check(err)
 
-			pageItem.items.AddItem(item.String, "", rune(0), func() {})
+			pageItem.items.AddItem(item.String, trans.String, rune(0), func() {})
 
 			pageItem.mIdDescr[int(id.Int64)] = descr.String
 			pageItem.mIdTrans[int(id.Int64)] = trans.String
@@ -171,7 +172,7 @@ func (pageItem *pageItemType) build() {
 			application.pages.SwitchToPage("new item")
 			return nil
 		}
-		if event.Rune() == 'h' && event.Modifiers() == tcell.ModAlt {
+		if event.Key() == tcell.KeyF1 {
 			application.pages.ShowPage("help")
 			return nil
 		}
@@ -184,6 +185,13 @@ func (pageItem *pageItemType) build() {
 	pageItem.descrs.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 's' && event.Modifiers() == tcell.ModAlt {
 			save()
+			return nil
+		}
+		if event.Rune() == 'v' && event.Modifiers() == tcell.ModAlt {
+
+			clipBoardContent, err := clipboard.ReadAll()
+			check(err)
+			pageItem.descrs.SetText(pageItem.descrs.GetText()+"\n"+clipBoardContent, true)
 			return nil
 		}
 		return event
@@ -331,7 +339,7 @@ func refreshItemList() {
 		err := itemFind.Scan(&id, &item, &trans, &descr)
 		check(err)
 
-		pageItem.items.AddItem(item.String, "", rune(0), func() {})
+		pageItem.items.AddItem(item.String, trans.String, rune(0), func() {})
 
 		pageItem.mIdTrans[int(id.Int64)] = trans.String
 		pageItem.mIdDescr[int(id.Int64)] = descr.String
