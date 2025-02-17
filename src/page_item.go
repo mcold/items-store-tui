@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"strconv"
 	"strings"
@@ -88,17 +89,16 @@ func (pageItem *pageItemType) build() {
 
 		rowCount := 1
 		for items.Next() {
-			id := 0
-			item := ""
-			trans := ""
-			descr := ""
-			items.Scan(&id, &item, &trans, &descr)
+			var id sql.NullInt64
+			var item, trans, descr sql.NullString
+			err := items.Scan(&id, &item, &trans, &descr)
+			check(err)
 
-			pageItem.items.AddItem(item, "", rune(0), func() {})
+			pageItem.items.AddItem(item.String, "", rune(0), func() {})
 
-			pageItem.mIdDescr[id] = descr
-			pageItem.mIdTrans[id] = trans
-			pageItem.mPosId[rowCount-1] = id
+			pageItem.mIdDescr[int(id.Int64)] = descr.String
+			pageItem.mIdTrans[int(id.Int64)] = trans.String
+			pageItem.mPosId[rowCount-1] = int(id.Int64)
 			rowCount++
 		}
 	}
@@ -325,17 +325,17 @@ func refreshItemList() {
 	pageItem.items.Clear()
 	rowCount := 1
 	for itemFind.Next() {
-		id := 0
-		item := ""
-		trans := ""
-		descr := ""
-		itemFind.Scan(&id, &item, &trans, &descr)
 
-		pageItem.items.AddItem(item, "", rune(0), func() {})
+		var id sql.NullInt64
+		var item, trans, descr sql.NullString
+		err := itemFind.Scan(&id, &item, &trans, &descr)
+		check(err)
 
-		pageItem.mIdTrans[id] = trans
-		pageItem.mIdDescr[id] = descr
-		pageItem.mPosId[rowCount-1] = id
+		pageItem.items.AddItem(item.String, "", rune(0), func() {})
+
+		pageItem.mIdTrans[int(id.Int64)] = trans.String
+		pageItem.mIdDescr[int(id.Int64)] = descr.String
+		pageItem.mPosId[rowCount-1] = int(id.Int64)
 		rowCount++
 	}
 
