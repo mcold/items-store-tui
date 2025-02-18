@@ -16,7 +16,7 @@ type pageItemType struct {
 	descrs     *tview.TextArea
 	filterFrm  *tview.Form
 	itemArea   *tview.TextArea
-	saveFrm    *tview.Form
+	btnFrm     *tview.Form
 	mIdDescr   map[int]string
 	mIdTrans   map[int]string
 	mPosId     map[int]int
@@ -100,13 +100,13 @@ func (pageItem *pageItemType) build() {
 		}
 	}
 
-	pageItem.saveFrm = tview.NewForm().AddButton("Save", func() {
-		save()
-	})
+	pageItem.btnFrm = tview.NewForm().
+		AddButton("Save", func() { save() }).
+		AddButton("Copy", func() { copyDescr() })
 
 	flexDescr := tview.NewFlex().
 		AddItem(pageItem.descrs, 0, 15, false).
-		AddItem(pageItem.saveFrm, 0, 1, false)
+		AddItem(pageItem.btnFrm, 0, 1, false)
 
 	flexDescr.SetDirection(tview.FlexRow)
 
@@ -183,7 +183,7 @@ func (pageItem *pageItemType) build() {
 		return event
 	})
 
-	pageItem.saveFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	pageItem.btnFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyUp {
 			app.SetFocus(pageItem.descrs)
 			return nil
@@ -198,7 +198,7 @@ func (pageItem *pageItemType) build() {
 			return nil
 		}
 		if event.Key() == tcell.KeyDelete {
-			delete()
+			deleteItem()
 			refreshItemList()
 
 			return nil
@@ -339,7 +339,12 @@ func save() {
 	log.Println("-------------------------------")
 }
 
-func delete() {
+func copyDescr() {
+	err := clipboard.WriteAll(pageItem.descrs.GetText())
+	check(err)
+}
+
+func deleteItem() {
 	query := "DELETE FROM item " + "WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
 
 	_, err := database.Exec(query)
