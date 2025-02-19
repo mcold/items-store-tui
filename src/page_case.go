@@ -45,7 +45,9 @@ func (pageCase *pageCaseType) build() {
 
 		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF7 {
 
+			clearCaseInsFields()
 			pageInfo.pages.SwitchToPage("caseIns")
+			app.SetFocus(pageCaseIns.caseArea)
 			return nil
 		}
 		if event.Key() == tcell.KeyDelete {
@@ -60,7 +62,9 @@ func (pageCase *pageCaseType) build() {
 
 		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF7 {
 
+			clearCaseInsFields()
 			pageInfo.pages.SwitchToPage("caseIns")
+			app.SetFocus(pageCaseIns.caseArea)
 			return nil
 		}
 		if event.Key() == tcell.KeyDelete {
@@ -106,10 +110,6 @@ func setCases() {
 			rowCount++
 		}
 
-		for pos, caseID := range pageCase.mPosCaseID {
-			log.Println(pos, caseID)
-		}
-
 		pageCase.caseList.SetCurrentItem(0)
 
 	}
@@ -152,8 +152,14 @@ func setCaseComment() {
 }
 
 func deleteCase() {
-	query := "DELETE FROM case " + "WHERE id = " + strconv.Itoa(pageCase.mPosCaseID[pageCase.caseList.GetCurrentItem()])
+	query := "DELETE FROM cases WHERE id = " + strconv.Itoa(pageCase.mPosCaseID[pageCase.caseList.GetCurrentItem()])
+	log.Println(query)
 
 	_, err := database.Exec(query)
 	check(err)
+}
+
+func clearCaseInsFields() {
+	pageCaseIns.caseArea.SetText("", true)
+	pageCaseIns.commentArea.SetText("", true)
 }

@@ -28,7 +28,7 @@ var pageItem pageItemType
 func (pageItem *pageItemType) build() {
 
 	pageItem.filterFrm = tview.NewForm().
-		AddInputField("", "", 20, nil, nil)
+		AddInputField("", "", 60, nil, nil)
 
 	pageItem.filterFrm.Box.SetBorder(true)
 	pageItem.filterFrm.Box.SetTitle("F2").
@@ -116,8 +116,9 @@ func (pageItem *pageItemType) build() {
 		itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
 		pageItem.itemArea.SetText(itemText, true)
 		pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]], false)
-		pageInfo.pages.ShowPage("desc")
-		pageInfo.pages.HidePage("case")
+		pageInfo.pages.SwitchToPage("desc")
+		pageCase.caseList.Clear()
+		pageCase.descCaseArea.SetText("", true)
 	})
 
 	pageItem.items.SetSelectedBackgroundColor(tcell.ColorGreen)
@@ -317,8 +318,12 @@ func copyDescr() {
 }
 
 func deleteItem() {
-	query := "DELETE FROM item " + "WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
 
-	_, err := database.Exec(query)
+	queryCases := "DELETE FROM cases WHERE id_item = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
+	_, err := database.Exec(queryCases)
+	check(err)
+
+	queryItem := "DELETE FROM item WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
+	_, err = database.Exec(queryItem)
 	check(err)
 }

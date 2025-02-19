@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"log"
+	"strconv"
 	"strings"
 )
 
@@ -32,6 +34,26 @@ func (pageCaseIns *pageCaseInsType) build() {
 
 	pageCaseIns.frmSave = tview.NewForm().AddButton("Save", func() {
 		saveCase()
+		pageInfo.pages.SwitchToPage("case")
+		setCases()
+		app.SetFocus(pageCase.caseList)
+		pageCase.caseList.SetCurrentItem(0)
+	})
+
+	pageCaseIns.caseArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageCaseIns.commentArea)
+			return nil
+		}
+		return event
+	})
+
+	pageCaseIns.commentArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(pageCaseIns.frmSave)
+			return nil
+		}
+		return event
 	})
 
 	pageCaseIns.Flex = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -43,15 +65,21 @@ func (pageCaseIns *pageCaseInsType) build() {
 }
 
 func saveCase() {
+	log.Println("-------------------------------")
+	log.Println("saveCase")
+	log.Println("--------------------")
 
 	if len(strings.Trim(pageCaseIns.caseArea.GetText(), "")) > 0 {
-		query := "INSERT INTO case(use_case, comment)" + "\n" +
-			"VALUES( '" + pageCaseIns.caseArea.GetText() + "'," +
-			"'" + pageCaseIns.commentArea.GetText() + "')" +
-			"ON CONFLICT(use_case)" + "\n" +
-			"DO UPDATE SET comment='" + pageCaseIns.commentArea.GetText() + "'"
+		query := "INSERT INTO cases(id_item, use_case, comment)" + "\n" +
+			"VALUES( " + strings.ReplaceAll(strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()]), "'", "''") + ", '" + strings.ReplaceAll(pageCaseIns.caseArea.GetText(), "'", "''") + "'," +
+			"'" + strings.ReplaceAll(pageCaseIns.commentArea.GetText(), "'", "''") + "')" +
+			" ON CONFLICT(use_case)" + "\n" +
+			" DO UPDATE SET comment='" + strings.ReplaceAll(pageCaseIns.commentArea.GetText(), "'", "''") + "'"
 
+		log.Println(query)
 		_, err := database.Exec(query)
 		check(err)
 	}
+
+	log.Println("-------------------------------")
 }
