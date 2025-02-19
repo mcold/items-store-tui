@@ -12,13 +12,13 @@ import (
 )
 
 type pageItemType struct {
+	//descrs   *tview.TextArea
+	//btnFrm   *tview.Form
+	//mIdDescr map[int]string
+	mIdTrans   map[int]string
 	items      *tview.List
-	descrs     *tview.TextArea
 	filterFrm  *tview.Form
 	itemArea   *tview.TextArea
-	btnFrm     *tview.Form
-	mIdDescr   map[int]string
-	mIdTrans   map[int]string
 	mPosId     map[int]int
 	curItemPos int
 }
@@ -47,12 +47,6 @@ func (pageItem *pageItemType) build() {
 		SetBackgroundColor(tcell.ColorDarkBlue).
 		SetBorderPadding(1, 1, 1, 1)
 
-	pageItem.descrs = tview.NewTextArea()
-	pageItem.descrs.Box.SetBorder(true).
-		SetTitle("F5").
-		SetTitleAlign(tview.AlignLeft).
-		SetBorderPadding(1, 0, 1, 0)
-
 	pageItem.filterFrm.GetFormItem(0).(*tview.InputField).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTab {
 			app.SetFocus(pageItem.filterFrm.GetFormItem(1).(*tview.InputField))
@@ -74,7 +68,6 @@ func (pageItem *pageItemType) build() {
 		AddItem(pageItem.items, 0, 10, false).
 		AddItem(pageItem.itemArea, 6, 0, false)
 
-	pageItem.mIdDescr = make(map[int]string)
 	pageItem.mIdTrans = make(map[int]string)
 	pageItem.mPosId = make(map[int]int)
 	err := database.Connect()
@@ -88,31 +81,21 @@ func (pageItem *pageItemType) build() {
 		rowCount := 1
 		for items.Next() {
 			var id sql.NullInt64
-			var item, trans, descr sql.NullString
-			err := items.Scan(&id, &item, &trans, &descr)
+			var item, trans, desc sql.NullString
+			err := items.Scan(&id, &item, &trans, &desc)
 			check(err)
 
 			pageItem.items.AddItem(item.String, trans.String, rune(0), func() {})
 
-			pageItem.mIdDescr[int(id.Int64)] = descr.String
+			pageDesc.mIdDesc[int(id.Int64)] = desc.String
 			pageItem.mPosId[rowCount-1] = int(id.Int64)
 			rowCount++
 		}
 	}
 
-	pageItem.btnFrm = tview.NewForm().
-		AddButton("Save", func() { save() }).
-		AddButton("Copy", func() { copyDescr() })
-
-	flexDescr := tview.NewFlex().
-		AddItem(pageItem.descrs, 0, 15, false).
-		AddItem(pageItem.btnFrm, 0, 1, false)
-
-	flexDescr.SetDirection(tview.FlexRow)
-
 	flexCmplx := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(flexItem, 0, 3, true).
-		AddItem(flexDescr, 0, 8, false).
+		AddItem(pageInfo.pages, 0, 8, false).
 		SetFullScreen(true)
 
 	pageItem.filterFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -121,7 +104,7 @@ func (pageItem *pageItemType) build() {
 			refreshItemList()
 			if pageItem.items.GetItemCount() > 0 {
 				pageItem.items.SetCurrentItem(0)
-				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
+				pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
 			return nil
 		}
@@ -132,7 +115,9 @@ func (pageItem *pageItemType) build() {
 	pageItem.items.SetFocusFunc(func() {
 		itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
 		pageItem.itemArea.SetText(itemText, true)
-		pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]], false)
+		pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]], false)
+		pageInfo.pages.ShowPage("desc")
+		pageInfo.pages.HidePage("case")
 	})
 
 	pageItem.items.SetSelectedBackgroundColor(tcell.ColorGreen)
@@ -148,6 +133,7 @@ func (pageItem *pageItemType) build() {
 		}
 		if event.Key() == tcell.KeyF3 {
 			app.SetFocus(pageItem.items)
+			pageInfo.pages.SwitchToPage("desc")
 			return nil
 		}
 		if event.Key() == tcell.KeyF4 {
@@ -155,7 +141,16 @@ func (pageItem *pageItemType) build() {
 			return nil
 		}
 		if event.Key() == tcell.KeyF5 {
-			app.SetFocus(pageItem.descrs)
+			pageInfo.pages.SwitchToPage("desc")
+			app.SetFocus(pageDesc.desc)
+			return nil
+		}
+		if event.Key() == tcell.KeyF6 {
+			setCases()
+			pageCase.caseList.SetCurrentItem(0)
+			pageInfo.pages.SwitchToPage("case")
+			app.SetFocus(pageCase.caseList)
+
 			return nil
 		}
 		if event.Key() == tcell.KeyInsert && event.Modifiers() == tcell.ModCtrl {
@@ -168,33 +163,10 @@ func (pageItem *pageItemType) build() {
 		return event
 	})
 
-	pageItem.descrs.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 's' && event.Modifiers() == tcell.ModAlt {
-			save()
-			return nil
-		}
-		if event.Rune() == 'v' && event.Modifiers() == tcell.ModAlt {
-
-			clipBoardContent, err := clipboard.ReadAll()
-			check(err)
-			pageItem.descrs.SetText(pageItem.descrs.GetText()+"\n"+clipBoardContent, true)
-			return nil
-		}
-		return event
-	})
-
-	pageItem.btnFrm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyUp {
-			app.SetFocus(pageItem.descrs)
-			return nil
-		}
-		return event
-	})
-
 	pageItem.items.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 
 		if event.Key() == tcell.KeyEnter {
-			app.SetFocus(pageItem.descrs)
+			app.SetFocus(pageDesc.desc)
 			return nil
 		}
 		if event.Key() == tcell.KeyDelete {
@@ -212,7 +184,7 @@ func (pageItem *pageItemType) build() {
 			cnt := pageItem.items.GetItemCount()
 			if curId < cnt {
 				pageItem.items.SetCurrentItem(curId)
-				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
+				pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
 
 			return nil
@@ -225,7 +197,7 @@ func (pageItem *pageItemType) build() {
 				pageItem.items.SetCurrentItem(curId)
 				itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
 				pageItem.itemArea.SetText(itemText, true)
-				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
+				pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
 
 			return nil
@@ -234,7 +206,7 @@ func (pageItem *pageItemType) build() {
 			curId := pageItem.items.GetCurrentItem() - 1
 			if curId > -1 {
 				pageItem.items.SetCurrentItem(curId)
-				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
+				pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
 
 			return nil
@@ -245,13 +217,13 @@ func (pageItem *pageItemType) build() {
 				pageItem.items.SetCurrentItem(curId)
 				itemText, _ := pageItem.items.GetItemText(pageItem.items.GetCurrentItem())
 				pageItem.itemArea.SetText(itemText, true)
-				pageItem.descrs.SetText(pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
+				pageDesc.desc.SetText(pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]]+"\n", true)
 			}
 
 			return nil
 		}
 		if event.Key() == tcell.KeyRight {
-			app.SetFocus(pageItem.descrs)
+			app.SetFocus(pageDesc.desc)
 		}
 		if event.Key() == tcell.KeyLeft {
 			app.SetFocus(pageItem.filterFrm)
@@ -294,7 +266,7 @@ func refreshItemList() {
 	itemFind, err := database.Query(query)
 	check(err)
 
-	pageItem.mIdDescr = make(map[int]string)
+	pageDesc.mIdDesc = make(map[int]string)
 	pageItem.mPosId = make(map[int]int)
 	pageItem.items.Clear()
 	rowCount := 1
@@ -308,7 +280,7 @@ func refreshItemList() {
 		pageItem.items.AddItem(item.String, trans.String, rune(0), func() {})
 
 		pageItem.mIdTrans[int(id.Int64)] = trans.String
-		pageItem.mIdDescr[int(id.Int64)] = descr.String
+		pageDesc.mIdDesc[int(id.Int64)] = descr.String
 		pageItem.mPosId[rowCount-1] = int(id.Int64)
 		rowCount++
 	}
@@ -325,12 +297,12 @@ func save() {
 
 	query := "UPDATE item" + "\n" +
 		"SET name = '" + pageItem.itemArea.GetText() + "',\n" +
-		"descr = '" + pageItem.descrs.GetText() + "'\n" +
+		"descr = '" + pageDesc.desc.GetText() + "'\n" +
 		"WHERE id = " + strconv.Itoa(pageItem.mPosId[pageItem.items.GetCurrentItem()])
 
 	log.Println(query)
 
-	pageItem.mIdDescr[pageItem.mPosId[pageItem.items.GetCurrentItem()]] = pageItem.descrs.GetText()
+	pageDesc.mIdDesc[pageItem.mPosId[pageItem.items.GetCurrentItem()]] = pageDesc.desc.GetText()
 
 	_, err := database.Exec(query)
 	check(err)
@@ -340,7 +312,7 @@ func save() {
 }
 
 func copyDescr() {
-	err := clipboard.WriteAll(pageItem.descrs.GetText())
+	err := clipboard.WriteAll(pageDesc.desc.GetText())
 	check(err)
 }
 

@@ -22,6 +22,7 @@ func (application *applicationType) init() {
 	app = tview.NewApplication()
 
 	application.pages = tview.NewPages()
+	pageInfo.build()
 	pageItem.build()
 
 	_, _, w, _ := pageItem.filterFrm.GetInnerRect()
