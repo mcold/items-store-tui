@@ -37,6 +37,12 @@ func (pageMainMessage *pageMainMessageType) build() {
 
 [yellow]alt + v[-:-:-:-]: Paste clipboard buffer content (only description field).
 
+CASES
+----
+[yellow]alt + c[-:-:-:-]: Copy case.
+[yellow]F6: cases list
+[yellow]F7: case description
+
 ABOUT
 
 ITEM-STORE is a free and open-source project maintained by contributors. Feel free report issues or submit feature requests on GitHub

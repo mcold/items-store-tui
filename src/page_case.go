@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"log"
@@ -31,7 +32,9 @@ func (pageCase *pageCaseType) build() {
 	pageCase.descCaseArea.SetBorder(true).
 		SetTitleAlign(tview.AlignLeft).
 		SetBackgroundColor(tcell.ColorDarkBlue).
-		SetBorderPadding(1, 1, 1, 1)
+		SetBorderPadding(1, 1, 1, 1).
+		SetTitle("F7").
+		SetTitleAlign(tview.AlignLeft)
 
 	pageCase.caseList.SetSelectedFunc(func(pos int, _ string, _ string, _ rune) {
 		setCaseComment()
@@ -43,7 +46,7 @@ func (pageCase *pageCaseType) build() {
 
 	pageCase.Flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 
-		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF7 {
+		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF8 {
 
 			clearCaseInsFields()
 			pageInfo.pages.SwitchToPage("caseIns")
@@ -54,13 +57,16 @@ func (pageCase *pageCaseType) build() {
 			deleteCase()
 			setCases()
 			return nil
+		}
+		if event.Key() == tcell.KeyF7 {
+			app.SetFocus(pageCase.descCaseArea)
 		}
 		return event
 	})
 
 	pageCase.caseList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 
-		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF7 {
+		if event.Key() == tcell.KeyInsert || event.Key() == tcell.KeyF8 {
 
 			clearCaseInsFields()
 			pageInfo.pages.SwitchToPage("caseIns")
@@ -70,6 +76,23 @@ func (pageCase *pageCaseType) build() {
 		if event.Key() == tcell.KeyDelete {
 			deleteCase()
 			setCases()
+			return nil
+		}
+		if event.Rune() == 'c' && event.Modifiers() == tcell.ModAlt {
+			caseText, _ := pageCase.caseList.GetItemText(pageCase.caseList.GetCurrentItem())
+			err := clipboard.WriteAll(caseText)
+			check(err)
+		}
+		return event
+	})
+
+	pageCase.descCaseArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+
+		if event.Rune() == 'v' && event.Modifiers() == tcell.ModAlt {
+
+			clipBoardContent, err := clipboard.ReadAll()
+			check(err)
+			pageCase.descCaseArea.SetText(pageCase.descCaseArea.GetText()+"\n"+clipBoardContent, true)
 			return nil
 		}
 		return event
