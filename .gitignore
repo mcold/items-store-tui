@@ -7,3 +7,4 @@ src/*.exe*
 src/*.db*
 todo
 *.log
+DBs

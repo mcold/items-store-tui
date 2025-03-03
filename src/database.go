@@ -3,6 +3,10 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -19,7 +23,7 @@ func (database *databaseType) buildConnectionString() {
 }
 
 func (database *databaseType) Connect() error {
-	db, err := sql.Open("sqlite", "DB.db")
+	db, err := sql.Open("sqlite", "DBs/"+os.Args[1]+".db")
 	check(err)
 
 	if err != nil {
@@ -36,6 +40,8 @@ func (database *databaseType) Connect() error {
 
 func check(err interface{}) {
 	if err != nil {
+		_, fileName, lineNo, _ := runtime.Caller(1) // Получаем информацию о вызывающем файле
+		log.Printf("%s: %d\n", filepath.Base(fileName), lineNo)
 		log.Println(err)
 		panic(err)
 	}

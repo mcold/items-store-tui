@@ -12,9 +12,6 @@ import (
 )
 
 type pageItemType struct {
-	//descrs   *tview.TextArea
-	//btnFrm   *tview.Form
-	//mIdDescr map[int]string
 	mIdTrans   map[int]string
 	items      *tview.List
 	filterFrm  *tview.Form
