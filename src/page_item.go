@@ -18,6 +18,7 @@ type pageItemType struct {
 	itemArea   *tview.TextArea
 	mPosId     map[int]int
 	curItemPos int
+	*tview.Flex
 }
 
 var pageItem pageItemType
@@ -44,6 +45,21 @@ func (pageItem *pageItemType) build() {
 		SetBackgroundColor(tcell.ColorDarkBlue).
 		SetBorderPadding(1, 1, 1, 1)
 
+	pageItem.itemArea.SetDisabled(true)
+
+	pageItem.itemArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+
+		if event.Key() == tcell.KeyCtrlQ {
+			pageItem.itemArea.SetDisabled(true)
+			pageItem.Flex.RemoveItem(pageItem.itemArea)
+			save()
+			app.SetFocus(pageItem.items)
+			return nil
+		}
+
+		return event
+	})
+
 	pageItem.filterFrm.GetFormItem(0).(*tview.InputField).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTab {
 			app.SetFocus(pageItem.filterFrm.GetFormItem(1).(*tview.InputField))
@@ -60,10 +76,9 @@ func (pageItem *pageItemType) build() {
 		return event
 	})
 
-	flexItem := tview.NewFlex().SetDirection(tview.FlexRow).
+	pageItem.Flex = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pageItem.filterFrm, 5, 0, true).
-		AddItem(pageItem.items, 0, 10, false).
-		AddItem(pageItem.itemArea, 6, 0, false)
+		AddItem(pageItem.items, 0, 10, false)
 
 	pageItem.mIdTrans = make(map[int]string)
 	pageItem.mPosId = make(map[int]int)
@@ -91,7 +106,7 @@ func (pageItem *pageItemType) build() {
 	}
 
 	flexCmplx := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(flexItem, 0, 3, true).
+		AddItem(pageItem.Flex, 0, 3, true).
 		AddItem(pageInfo.pages, 0, 8, false).
 		SetFullScreen(true)
 
@@ -173,10 +188,21 @@ func (pageItem *pageItemType) build() {
 
 			return nil
 		}
+		if event.Key() == tcell.KeyCtrlQ {
+			if pageItem.itemArea.GetDisabled() == true {
+				pageItem.Flex.AddItem(pageItem.itemArea, 6, 0, false)
+				pageItem.itemArea.SetDisabled(false)
+			} else {
+				pageItem.Flex.RemoveItem(pageItem.itemArea)
+				pageItem.itemArea.SetDisabled(true)
+			}
+			return nil
+		}
+
 		return event
 	})
 
-	flexItem.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	pageItem.Flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTab {
 			curId := pageItem.items.GetCurrentItem() + 1
 			cnt := pageItem.items.GetItemCount()
